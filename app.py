@@ -383,6 +383,8 @@ elif page == "AI分析":
         )
         
         if st.button("🚀 开始AI分析", type="primary") and selected_resumes:
+            # 重新获取数据库连接
+            conn = get_db()
             jd = conn.execute("SELECT * FROM jds WHERE id = ?", (jd_id,)).fetchone()
             
             for name in selected_resumes:
@@ -391,13 +393,12 @@ elif page == "AI分析":
                     with st.spinner(f"分析中: {name}"):
                         result = analyze_resume_with_ai(resume['extracted_text'], jd['content'])
                         
-                        conn = get_db()
                         conn.execute("""
                             INSERT INTO analyses (resume_id, jd_id, match_score, tags, talent_profile, resume_name)
                             VALUES (?, ?, ?, ?, ?, ?)
                         """, (resume['id'], jd_id, result['match_score'], json.dumps(result['tags']), json.dumps(result['talent_profile']), resume['original_name']))
                         conn.commit()
-                        conn.close()
+            conn.close()
                         
                         st.success(f"✓ {name} - 匹配度: {result['match_score']}分")
             
