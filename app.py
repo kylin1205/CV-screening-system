@@ -64,15 +64,32 @@ def extract_text_from_pdf(file_bytes):
         return ""
 
 def extract_text_from_image(file_bytes):
+    """使用在线OCR API提取图片文字"""
+    import base64
+    
+    # 方法1: 使用OCR.space免费API
+    try:
+        import requests
+        files = {'file': ('image.png', file_bytes, 'image/png')}
+        data = {'language': 'chs', 'isOverlayRequired': 'false'}
+        response = requests.post(
+            'https://api.ocr.space/parse/image',
+            files=files,
+            data=data,
+            headers={'apikey': 'helloworld'}  # 免费API key，有限制
+        )
+        result = response.json()
+        if result.get('ParsedResults'):
+            return result['ParsedResults'][0]['ParsedText'].strip()
+    except:
+        pass
+    
+    # 方法2: 返回提示信息
     try:
         img = Image.open(io.BytesIO(file_bytes))
-        try:
-            import pytesseract
-            return pytesseract.image_to_string(img, lang='chi_sim+eng').strip()
-        except:
-            return f"[图片 - {img.size[0]}x{img.size[1]}像素]"
+        return f"[图片简历 - {img.size[0]}x{img.size[1]}像素]\n请手动输入简历内容或使用PDF格式"
     except:
-        return ""
+        return "[无法解析图片简历]"
 
 def extract_text_from_file(file_bytes, filename):
     ext = filename.lower().split('.')[-1]
